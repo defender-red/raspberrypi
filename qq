@@ -1,1 +1,174 @@
-test
+#!/bin/sh
+TEMP=/tmp/answer$$
+
+whiptail --title "Main Menu" --menu "Category: " 0 0 0 \
+	u "Utils" \
+	f "Firewall" \
+	l "Logs" \
+	s "System" \
+	2>$TEMP
+	mainchoice=`cat $TEMP`
+	case $mainchoice in
+
+                #### Firewall Menu ####
+
+		f)
+
+		{
+		whiptail --title "Administrative tasks"  --menu  "Tasks :" 0 0 0 \
+			1 "Display firewall settings" \
+			2 "Restore firewall settings" \
+			3 "Flush Firewall settings" \
+			4 "Monitor SYSLOG firewall" \
+			5 "Save Firewall Settings" \
+			2>$TEMP
+		choice=`cat $TEMP`
+		case $choice in
+		        1)      sudo iptables -L -n -v
+        		        ;;
+		        2)      sudo iptables-restore </etc/iptables/rules.v4
+				sudo ip6tables-restore </etc/iptables/rules.v6
+	        	        sudo iptables -L -n -v
+	                	;;
+	        	3)      sudo iptables --flush
+		                sudo iptables -L -n -v
+		                ;;
+			4)	watch -n 10 "sudo tail -n 50 /var/log/syslog | grep \"iptables denied\" |  cut -d ' ' -f4,14,15,22,23 | grep -v '244.0.0'"
+				;;
+			5)	ipset save > /etc/ipset.up.rules
+				iptables-save > /etc/iptables/rules.v4
+				;;
+		esac
+		}
+		;;
+
+                #### Logs Menu ####
+
+                l)
+
+                {
+                whiptail --title "Logs"  --menu  "Logs :" 0 0 0 \
+                        1 "imap Logins" \
+                        2 "" \
+                        3 "" \
+                        4 "" \
+                        2>$TEMP
+                choice=`cat $TEMP`
+                case $choice in
+                        1)	cat /var/log/syslog | grep imap | grep Login | cut -d ' ' -f1,2,3,4,8,9,11
+                                ;;
+                        2)
+                                ;;
+                        3)
+                                ;;
+                        4)
+                                ;;
+                esac
+                }
+                ;;
+
+
+                #### System Menu ####
+
+                s)
+
+                {
+                whiptail --title "System tasks"  --menu  "Tasks :" 0 0 0 \
+                        1 "Update System" \
+			2 "Reload Apache Server" \
+                        2>$TEMP
+                systemchoice=`cat $TEMP`
+                case $systemchoice in
+                        1) 	sudo apt-get update
+				sudo apt-get dist-upgrade
+                        ;;
+			2) 	sudo service apache2 reload
+				sudo systemctl daemon-reload
+				sudo service apache2 status
+			;;
+                esac
+                }
+                ;;
+
+		#### Utiltiy Menu ####
+
+		u)
+
+                {
+                whiptail --title "Utility tasks"  --menu  "Tasks :" 0 0 0 \
+                        1 "List Enabled Services" \
+                        2 "List Diabled Services" \
+			3 "Sync GDRIVE (root)" \
+                        2>$TEMP
+                utilitychoice=`cat $TEMP`
+                case $utilitychoice in
+                        1)	service --status-all | grep "\[ + \]"
+				;;
+                        2)      echo Note: A Services is considered disabled based on it\'s upstart script
+                                           So id thre is no upstart script it\'s considered disabled
+                                service --status-all | grep "\[ - \]"
+                        	;;
+			3)	gdrive sync upload /root/raspbacksync 0B2zgUBjeak0QNXl0YjFDTjRMS2c
+				;;
+                esac
+                }
+                ;;
+
+		#### Radio ####
+
+		1) 
+		{	
+		whiptail --title "Radio"  --menu  "Options :" 0 0 0 \
+			1 "Play Random Station" \
+			2 "Volume Control" \
+			3 "Save Playing" \
+			4 "Play Random Saved" \
+			5 "List Currently Playing" \
+			6 "Soma FM Drone Zone" \
+			7 "Secret Agent" \
+			8 "Suburbs of Goa" \
+			9 "ABC Disco funk" \
+		       10 "70's Disco Nights" \
+		       11 "XGen Diskco Radio" \
+		       12 "OTR" \
+                       13 "Dark Matter Radio" \
+			2>$TEMP
+			radiochoice=`cat $TEMP`
+			case $radiochoice in
+				1) 	killall -9 mplayer 2>/dev/null >/dev/null
+					ccmdline=$(cat /home/deth/radio.csv | grep -i `rand -M 51198`, | cut -d , -f2 | tail -n 1)
+					echo $ccmdline
+					mplayer $ccmdline  >/dev/null 2>/dev/null &
+					;;
+				2)	sudo alsamixer
+					;;
+				3)	echo http://$(ps -f | grep -i "mplayer " | head -n 1 | sed -n 's/^.*http:\/\///p') >>/home/deth/radio_like.txt
+					cat /home/deth/radio_like.txt
+					;;
+				4)	killall -9 mplayer
+					mplayer $(sed -n "$(($(rand -M $(wc -l /home/deth/radio_like.txt | cut -d ' ' -f1))+1))p" /home/deth/radio_like.txt ) >/dev/null 2>/dev/null &
+					;;
+				5)	ps -f | grep -i "mplayer " | head -n 1 | sed -n 's/^.*http:\/\///p'
+					;;
+				6)	killall -9 mplayer 2>/dev/null >/dev/null ; mplayer http://uwstream2.somafm.com:80   >/dev/null 2>/dev/null & 
+					;;
+                                7)      killall -9 mplayer 2>/dev/null >/dev/null ; mplayer http://xstream1.somafm.com:9010   >/dev/null 2>/dev/null & 
+					;;
+                                8)      killall -9 mplayer 2>/dev/null >/dev/null ; mplayer http://xstream1.somafm.com:8850  >/dev/null 2>/dev/null & 
+					;;
+                                9)      killall -9 mplayer 2>/dev/null >/dev/null ; mplayer http://streaming202.radionomy.com:80/ABC-DISCO-FUNK  >/dev/null 2>/dev/null &
+                                        ;;
+                                10)     killall -9 mplayer 2>/dev/null >/dev/null ; mplayer http://streaming208.radionomy.com:80/70s-Disco-Nights  >/dev/null 2>/dev/null &
+                                        ;;
+                                11)     killall -9 mplayer 2>/dev/null >/dev/null ; mplayer http://xgenradio.dyndns.org:8000/xgen-disco  >/dev/null 2>/dev/null &
+                                        ;;
+                                12)     killall -9 mplayer 2>/dev/null >/dev/null ; mplayer http://209.105.250.69:8477  >/dev/null 2>/dev/null &
+                                        ;;
+                                13)     killall -9 mplayer 2>/dev/null >/dev/null ; mplayer http://live.darkmatterradio.net:8303/stream  >/dev/null 2>/dev/null &
+                                        ;;
+				
+			esac
+		}
+		;;
+	esac
+rm `echo $TEMP`
